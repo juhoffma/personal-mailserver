@@ -1,0 +1,32 @@
+---
+- name: Install squidclamav dependencies
+  apt: name={{ item }} state=latest
+  with_items:
+    - gcc
+    - make
+    - curl
+    - libcurl4-gnutls-dev
+    - c-icap
+    - libicapapi-dev
+
+- name: Install squidclamav
+  script: install_squidclamav.sh
+
+- name: Copy squidclamav.conf
+  template:
+    src=squidclamav.conf.j2
+    dest=/etc/c-icap/squidclamav.conf
+
+- name: Link /etc/c-icap/squidclamav.conf to /etc/squidclamav.conf
+  file: src=/etc/c-icap/squidclamav.conf dest=/etc/squidclamav.conf state=link
+
+- name: Install squid
+  apt: name=squid state=latest
+
+- name: Remove build tools
+  apt: name={{ item }} state=absent
+  with_items:
+    - gcc
+    - make
+    - libcurl4-gnutls-dev
+    - libicapapi-dev
