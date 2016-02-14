@@ -1,3 +1,0 @@
----
-- name: Install postfix
-  apt: name=postfix state=present
