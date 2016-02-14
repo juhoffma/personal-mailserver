@@ -1,0 +1,31 @@
+---
+- name: Install dkim related packages
+  apt: name={{ item }} state=present
+  with_items:
+    - opendkim
+    - opendkim-tools
+
+- name: Make opendkim directory
+  file: name=/etc/opendkim state=directory
+
+- name: Generate the opendkim key
+  raw: opendkim-genkey -r -s default -d {{ domain_name }} -D /etc/opendkim
+
+- name: Create /etc/opendkim/KeyTable
+  raw: echo "default._domainkey.mail.{{ domain_name }} mail.{{ domain_name }}:default:/etc/opendkim/default.private" > /etc/opendkim/KeyTable
+
+- name: Create /etc/opendkim/SigningTable
+  raw: echo "\*@{{ domain_name }} default._domainkey.mail.{{ domain_name }}" > /etc/opendkim/SigningTable
+
+- name: Set permissions on /etc/opendkim/default.private
+  file: name=/etc/opendkim/default.private owner=opendkim group=opendkim
+
+- name: Enable opendkim
+  raw: echo 'SOCKET="inet:8891@localhost"' >> /etc/default/opendkim
+
+- name: Copy opendkim.conf
+  template:
+    src=opendkim.conf.j2
+    dest=/etc/opendkim.conf
+  notify:
+    - restart opendkim

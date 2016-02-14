@@ -1,0 +1,17 @@
+---
+- hosts: all
+  sudo: true
+  vars:
+    document_root: /vagrant
+    domain_name: example.com
+    enable_sa: 1
+    enable_sa_update: 1
+  pre_tasks:
+    - name: update apt cache
+      apt: update_cache=yes
+    - name: Install german language package
+      apt: name=language-pack-de state=present
+  roles:
+    - webserver
+    - database
+    - mailserver

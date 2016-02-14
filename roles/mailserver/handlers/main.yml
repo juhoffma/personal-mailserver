@@ -1,0 +1,15 @@
+---
+- name: reload amavis
+  service: name=amavis state=reloaded
+
+- name: reload postfix
+  service: name=postfix state=reloaded
+
+- name: reload spamassassin
+  service: name=spamassassin state=reloaded
+
+- name: restart dovecot
+  service: name=dovecot state=restarted
+
+- name: restart opendkim
+  service: name=opendkim state=restarted

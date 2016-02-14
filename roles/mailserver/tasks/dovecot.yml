@@ -1,0 +1,16 @@
+---
+- name: Install Dovecot
+  apt: name={{ item }}
+  with_items:
+    - dovecot-core
+    - dovecot-imapd
+
+- name: Create SSL Certificates
+  raw: openssl req -x509 -nodes -days 3650 -newkey rsa:2048 -subj "/C=DE/ST=Bremen/L=Bremen/O=Langer Systemberatung/CN=mail.{{ domain_name }}" -keyout /etc/ssl/private/mail.{{ domain_name }}.key -out /etc/ssl/certs/mail.{{ domain_name }}.pem
+
+- name: Copy dovecot configuration
+  template:
+    src=dovecot.conf.j2
+    dest=/etc/dovecot/dovecot.conf
+  notify:
+    - reload dovecot

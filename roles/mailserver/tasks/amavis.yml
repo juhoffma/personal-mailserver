@@ -1,0 +1,106 @@
+---
+- name: Install base antivirus and spamassassin packages
+  apt: name={{ item }} state=present
+  with_items:
+    - amavisd-new
+    - spamassassin
+    - clamav-daemon
+
+- name: Install optional packages for better spam detection
+  apt: name={{ item }} state=present
+  with_items:
+    - libnet-dns-perl
+    - libmail-spf-perl
+    - pyzor
+    - razor
+    - postfix-policyd-spf-python
+    - postfix-policyd-spf-perl
+    - postgrey
+
+- name: Install unarchivers
+  apt: name={{ item }} state=present
+  with_items:
+    - arj
+    - bzip2
+    - cabextract
+    - cpio
+    - file
+    - gzip
+    - lhasa
+    - nomarch
+    - pax
+    - rar
+    - unrar
+    - unzip
+    - zip
+    - zoo
+
+- name: Add the clamav user
+  user: name=clamav group=amavis
+
+- name: Add the amavis user
+  user: name=amavis group=clamav
+
+- name: Create Razor directories
+  raw: sudo -u amavis -i razor-admin -create
+
+- name: Register razor
+  raw: sudo -u amavis -i razor-admin -register
+
+- name: Download pyzor servers
+  raw: sudo -u amavis -i pyzor discover
+
+- name: Create mailname
+  template:
+    src=mailname.j2
+    dest=/etc/mailname
+
+- name: Create hostname
+  template:
+    src=mailname.j2
+    dest=/etc/hostname
+
+
+- name: Create /etc/hosts
+  template:
+    src=hosts.j2
+    dest=/etc/hosts
+
+- name: Copy node-id configuration
+  template:
+    src=05-node_id.j2
+    dest=/etc/amavis/conf.d/05-node_id
+  notify:
+    - reload amavis
+
+- name: Copy content filter configuration
+  template:
+    src=15-content_filter_mode.j2
+    dest=/etc/amavis/conf.d/15-content_filter_mode
+  notify:
+    - reload amavis
+
+- name: Integrate amavis into postfix
+  raw: sudo postconf -e "content_filter = smtp-amavis:[127.0.0.1]:10024"
+  notify: reload postfix
+
+- name: Copy master.cf to postfix configuration
+  template:
+    src=master.cf.j2
+    dest=/etc/postfix/master.cf
+  notify:
+    - reload postfix
+
+- name: Copy default Spamassassin configuration
+  template:
+    src=default-spamassassin.j2
+    dest=/etc/default/spamassassin
+  notify:
+    - reload spamassassin
+
+- name: Copy daily cronjob
+  template:
+    src=cron.daily-spamassassin.j2
+    dest=/etc/cron.daily/spamassassin
+  notify:
+    - reload spamassassin

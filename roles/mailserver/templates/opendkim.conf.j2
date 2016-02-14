@@ -1,0 +1,19 @@
+Syslog yes
+SyslogSuccess Yes
+LogWhy yes
+
+UMask 002
+
+KeyTable refile:/etc/opendkim/KeyTable
+SigningTable refile:/etc/opendkim/SigningTable
+Selector default
+X-Header no
+SignatureAlgorithm rsa-sha256
+
+Canonicalization relaxed/simple
+Mode sv
+AutoRestart Yes
+AutoRestartRate 5/1h
+InternalHosts 127.0.0.1, localhost, {{ domain_name }}, mail.{{ domain_name }}
+
+OversignHeaders From
