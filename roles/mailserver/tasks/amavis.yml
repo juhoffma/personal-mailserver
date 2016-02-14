@@ -36,10 +36,10 @@
     - zoo
 
 - name: Add the clamav user
-  user: name=clamav group=amavis
+  user: name=clamav groups=amavis state=present
 
 - name: Add the amavis user
-  user: name=amavis group=clamav
+  user: name=amavis groups=clamav state=present
 
 - name: Create Razor directories
   raw: sudo -u amavis -i razor-admin -create
@@ -59,7 +59,6 @@
   template:
     src=mailname.j2
     dest=/etc/hostname
-
 
 - name: Create /etc/hosts
   template:
@@ -104,3 +103,14 @@
     dest=/etc/cron.daily/spamassassin
   notify:
     - reload spamassassin
+
+- name: Update ClamAV database
+  raw: /usr/bin/freshclam
+  notify: restart clamav-daemon
+
+- name: Enable Clamav Daemons
+  service: name={{ item }} state=started enabled=true
+  with_items:
+    - clamav-daemon
+    - clamav-freshclam
+    - amavis

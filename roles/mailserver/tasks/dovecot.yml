@@ -13,4 +13,4 @@
     src=dovecot.conf.j2
     dest=/etc/dovecot/dovecot.conf
   notify:
-    - reload dovecot
+    - restart dovecot

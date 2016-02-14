@@ -15,7 +15,7 @@
   raw: echo "default._domainkey.mail.{{ domain_name }} mail.{{ domain_name }}:default:/etc/opendkim/default.private" > /etc/opendkim/KeyTable
 
 - name: Create /etc/opendkim/SigningTable
-  raw: echo "\*@{{ domain_name }} default._domainkey.mail.{{ domain_name }}" > /etc/opendkim/SigningTable
+  raw: echo "*@{{ domain_name }} default._domainkey.mail.{{ domain_name }}" > /etc/opendkim/SigningTable
 
 - name: Set permissions on /etc/opendkim/default.private
   file: name=/etc/opendkim/default.private owner=opendkim group=opendkim

@@ -6,11 +6,18 @@
     domain_name: example.com
     enable_sa: 1
     enable_sa_update: 1
+    debug: true
   pre_tasks:
     - name: update apt cache
       apt: update_cache=yes
+    - name: upgrade system
+      apt: upgrade=yes
     - name: Install german language package
       apt: name=language-pack-de state=present
+  tasks:
+    - name: Create Test user
+      user: name=hoffmann password=$6$GOfhV58e5$c5mrppD4uN2yXm2ODEXjkuAK6VHYRwGGQxwNBw4vj9qYjsWm.PeJs48KWN0pS8akkyGyinuCFbgcH3Dms2.dX.
+      when: debug
   roles:
     - webserver
     - database
