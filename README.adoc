@@ -1,0 +1,43 @@
+Personal Mailserver
+===================
+
+This ansible playbook will install a postfix based mailserver
+with anti-spam and anti-virus detection software based on clamav.
+
+I am using an Ubuntu Version here, but you could use any kind of
+distribution.
+
+The Mailserver was setup using the following how-tos and articles
+I found on the web:
+
+- https://wiki.ubuntuusers.de/Amavis-Spam-Virenfilter/
+- http://dokuwiki.tachtler.net/doku.php?id=tachtler:postfix_altermime_installieren
+- https://www.debinux.de/2014/11/dkim-verstaendnis-konfiguration-und-installation-von-opendkim/
+- https://www.devops.zone/mailserver/integrating-postgrey-into-postfix-greylisting-filter/
+- https://www.digitalocean.com/community/tutorials/how-to-install-webmin-with-ssl-on-ubuntu-14-04
+- https://help.ubuntu.com/lts/serverguide/mail-filtering.html
+
+The Mailserver uses the following techniques to prevent spam
+
+- *postgrey* http://postgrey.schweikert.ch
+- *SPF* http://www.openspf.org
+- *DKIM* http://opendkim.org
+- *spamassassin* http://spamassassin.apache.org
+- *amavisd-new* https://www.ijs.si/software/amavisd/
+- *ClamAV* http://www.clamav.net
+
+Along with a web proxy server to secure your network based on:
+
+- *squid* http://www.squid-cache.org
+- *c-icap* http://c-icap.sourceforge.net
+- *squidclamav* http://squidclamav.darold.net
+
+## Installation
+
+You need [vagrant](http://vagrantup.com) and [ansible](http://www.ansible.com).
+When you have them installed, all you need to do is to call
+
+```
+vagrant up --provider=virtualbox
+```
+and the machine will be fully configured for you.
