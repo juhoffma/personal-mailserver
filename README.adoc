@@ -40,4 +40,18 @@ When you have them installed, all you need to do is to call
 ```
 vagrant up --provider=virtualbox
 ```
-and the machine will be fully configured for you.
+and the machine will be fully configured for you. After the machine is
+provisioned, the following ports on your local machine are forwarded to
+the following ports on the vagrant machine:
+
+```
+local: 10080 ---> VM port 80
+local: 10025 ---> VM port 25
+local: 10143 ---> VM port 143
+local:   993 ---> VM port 993
+local:   465 ---> VM port 465
+local:   587 ---> VM port 587
+local: 13128 ---> VM port 3128
+```
+
+This gives you the ability to test the environment.
