@@ -1,6 +1,6 @@
 ---
 - name: reload amavis
-  service: name=amavis state=reloaded
+  service: name=amavis state=restarted
 
 - name: reload postfix
   service: name=postfix state=reloaded
