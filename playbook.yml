@@ -6,7 +6,7 @@
     domain_name: example.com
     enable_sa: 1
     enable_sa_update: 1
-    squid_localnet: 192.168.178.0/24
+    local_network: 192.168.178.0/24
     debug: true
   pre_tasks:
     - name: update apt cache
