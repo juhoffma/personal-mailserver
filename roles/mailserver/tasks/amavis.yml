@@ -105,7 +105,7 @@
     - reload spamassassin
 
 - name: Enable Clamav Daemons
-  service: name={{ item }} state=started enabled=true
+  service: name={{ item }} state=stopped enabled=true
   with_items:
     - clamav-daemon
     - clamav-freshclam
@@ -114,3 +114,10 @@
 - name: Update ClamAV database
   raw: /usr/bin/freshclam
   notify: restart clamav-daemon
+
+- name: Enable Clamav Daemons
+  service: name={{ item }} state=started enabled=true
+  with_items:
+    - clamav-daemon
+    - clamav-freshclam
+    - amavis
