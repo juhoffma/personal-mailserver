@@ -45,6 +45,8 @@
   template:
     src=squid.conf.j2
     dest=/etc/squid3/squid.conf
+  notify:
+    - restart squid
 
 - name: Enable Squid related Daemons
   service: name={{ item }} state=started enabled=true
