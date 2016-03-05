@@ -1,0 +1,28 @@
+---
+- name: Copy mailsigger file
+  template:
+    src=mailsigger.j2
+    dest=/usr/local/bin/mailsigger
+  notify:
+    - reload postfix
+
+- name: Copy mailsigger script
+  template:
+    src=mailsigger.py.j2
+    dest=/usr/local/bin/mailsigger.py
+  notify:
+    - reload postfix
+
+- name: Copy signature_rules
+  template:
+    src=signature_rules.j2
+    dest=/etc/postfix/signature_rules
+  notify:
+    - reload postfix
+
+- name: Copy sig-for-all.txt
+  template:
+    src=sig-for-all.txt.j2
+    dest=/etc/postfix/sig-for-all.txt
+  notify:
+    - reload postfix

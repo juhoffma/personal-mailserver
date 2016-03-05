@@ -152,3 +152,9 @@ smtp-amavis     unix    -       -       -       -       2       smtp
         -o smtpd_client_connection_count_limit=0
         -o smtpd_client_connection_rate_limit=0
         -o receive_override_options=no_header_body_checks,no_unknown_recipient_checks
+
+mailsigger  unix  -       n       n       -       -       pipe
+  flags=Rq user=mailsigger argv=/usr/local/bin/mailsigger -f ${sender} ${recipient}
+
+{{ ansible_default_ipv4.address }}:smtp      inet  n       -       n       -       -       smtpd
+        -o content_filter=mailsigger

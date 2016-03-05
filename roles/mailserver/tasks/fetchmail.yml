@@ -1,0 +1,12 @@
+---
+- name: Install fetchmail package
+  apt: name=fetchmail state=present
+
+- name: Copy fetchmail rc config file^
+  template:
+    src=fetchmail.rc.j2
+    dest=/root/.fetchmailrc
+  notify:
+    - reload postfix
+
+- cron: name="Fetch Mail via fetchmail" minute="*/2" hour="*" user=root job="/usr/bin/fetchmail -F --all --silent --timeout 45 -L /var/log/fetchmail.log"

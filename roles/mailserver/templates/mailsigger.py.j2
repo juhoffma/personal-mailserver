@@ -1,0 +1,186 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+"""
+    This little program adds business signatures (e.g. address information)
+    to a mail.
+    It works as a content_filter for postfix and expects the mail on
+    stdin.
+    License: GVLv2 <http://www.gnu.org/copyleft/gpl.html>
+    Author: Karsten Schulz <kaschu@t800.ping.de>
+"""
+
+import email
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+import logging
+import rfc822
+import sys
+
+#############################################################################
+# please configure the following values:                                    #
+#############################################################################
+
+# configure different sig-files for different sender here:
+#SIGNATURE_RULES_FILE = 'test/signature_rules'
+SIGNATURE_RULES_FILE = '/etc/postfix/signature_rules'
+
+# which encoding do you use in your signature files?
+SIGNATURE_ENCODING = 'utf-8'
+
+# loglevel, one of CRITICAL, ERROR, WARNING, INFO, DEBUG
+VERBOSITY = logging.DEBUG
+
+# logfile
+LOGFILE = '/var/spool/mailsigger/mailsigger.log'
+
+#############################################################################
+# end of configuration                                                      #
+#############################################################################
+
+__revision__ = '$Revision: 149 $'
+__version__ = '0.4'
+
+# TODO: rewrite plain mail handling, recode disclaimer to fit 
+#       mail encoding to prevent conversion to multipart mail!
+# TODO: handle 'unix from'?
+# TODO: handle MessageErrors (parsing, MIME, aso)
+
+try:
+    logging.basicConfig(level=VERBOSITY,
+                        format='%(asctime)s %(levelname)s %(message)s',
+                        filename=LOGFILE,
+                        filemode='a')
+except IOError, err:
+    # we can't use LOGFILE, so just use stderr
+    logging.basicConfig(level=VERBOSITY,
+                        format='%(asctime)s %(levelname)s %(message)s')
+    logging.error('Problem using logfile %s: %s' % (LOGFILE, err))
+
+logging.debug('*************** Programm starts ***************')
+
+def get_mime_msg(oldmsg, sig):
+    """Combines part with oldmsg to a new multipart msg."""
+    subtype = oldmsg.get_content_subtype()
+    #charset = oldmsg.get_content_charset()
+    if subtype != 'mixed':
+        logging.debug('Found multipart/%s mail' % subtype)
+        # handle alternative MIME
+        oldbody = MIMEMultipart(_subtype = subtype)
+        oldbody.set_payload(oldmsg.get_payload())
+        newbody = MIMEMultipart()
+        newbody.attach(oldbody)
+        newbody.attach(sig)
+        newmsg = MIMEMultipart(_subtype = 'mixed')
+        for header in oldmsg.keys():
+            # we already have 'Content-Type' and 'MIME-Version':
+            if header == 'Content-Type' or header == 'MIME-Version':
+                continue
+            newmsg[header] = oldmsg.get(header)
+        newmsg.attach(newbody)
+        logging.debug('Returning converted mixed-type mail with signature.')
+        return newmsg
+        
+    else:
+        oldmsg.attach(sig)
+        logging.debug('Returning mixed-type mail with signature.')
+        return oldmsg
+    
+def get_signature(sender):
+    """Returns the signature for sender, or ""."""
+    signatures = {}
+    signature = ""
+    senderdomain = ""
+    if '@' in sender:
+        senderdomain = '@' + sender.split('@', 1)[1]
+    try:
+        # read signature rules
+        signaturefile = file(SIGNATURE_RULES_FILE, "r")
+        lines = signaturefile.readlines()
+        signaturefile.close()
+        signaturefilename = None
+        for line in lines:
+            line = line.strip()
+            if len(line) > 0 and line[0] != '#':
+                try:
+                    (sigsender, sigfile) = line.split()
+                except ValueError:
+                    # don't use a sig for this sender!
+                    sigsender = line
+                    sigfile = ""
+                signatures[sigsender] = sigfile
+        if sender in signatures.keys():
+            if len(signatures[sender]) > 0:
+                signaturefilename = signatures[sender]
+        elif senderdomain in signatures.keys():
+            signaturefilename = signatures[senderdomain]
+        if signaturefilename is not None:
+            try:
+                logging.debug('Trying to read signaturefile: %s'
+                              % signaturefilename)
+                sigfile = file(signaturefilename, "r")
+                signature = sigfile.read()
+                sigfile.close()
+            except IOError, errmsg:
+                logging.error('Cannot open signature file: %s!'
+                              % signatures[senderdomain])
+                logging.error('Error %s' % errmsg)
+    except IOError, errmsg:
+        logging.error('Cannot open signature rules file: %s!'
+                      % SIGNATURE_RULES_FILE)
+        logging.error('Error %s' % errmsg)
+    return signature
+    
+
+def get_sigged_msg(message):
+    """Processes the input message."""
+    signature = ""
+    msg = email.message_from_string(message)
+    (dummy, sender) = rfc822.parseaddr(msg.get('From'))
+    logging.debug('** Got new mail with length %d from <%s>'
+                  % (len(message), sender))
+    if sender is None:
+        logging.error('Sender address parsing failed for: %s' % sender)
+    else:
+        signature = get_signature(sender)
+    if len(signature) > 0:
+        if not msg['X-MailSigger']:
+            msg.add_header('X-MailSigger', 
+                       'sponsored for you by www.linux-systemhaus.de')
+        if msg.is_multipart():
+            newsig = MIMEText(signature, _charset=SIGNATURE_ENCODING)
+            return get_mime_msg(msg, newsig)
+        else:
+            # original mail is plain, test if our sig encoding fits:
+            subtype = msg.get_content_subtype()
+            charset = msg.get_content_charset()
+            if charset is None:
+                charset = 'us-ascii'
+            if charset.lower() == SIGNATURE_ENCODING.lower():
+                newbody = msg.get_payload() + signature
+                msg.set_payload(newbody)
+                logging.debug('Returning plaintext mail with signature.')
+                return msg
+            else:
+                sigged_msg = MIMEMultipart()
+                newsig = MIMEText(signature, _charset=SIGNATURE_ENCODING)
+                newbody = MIMEText(msg.get_payload(decode=True), 
+                                   _subtype = subtype, _charset = charset)
+                for header in msg.keys():
+                    sigged_msg.add_header(header, msg.get(header))
+                sigged_msg.attach(newbody)
+                sigged_msg.attach(newsig)
+                logging.debug('returning converted multipart mail with sign')
+                return sigged_msg
+    else:
+        logging.debug('Returning mail unsigged (no signature found).')
+        return msg
+
+if __name__ == '__main__':
+    if len(sys.argv) > 1:
+        mymsg = file(sys.argv[1], 'r').read()
+    else:
+        mymsg = sys.stdin.read()
+    print get_sigged_msg(mymsg).as_string()
+    logging.debug('Program terminates normally')
+    logging.shutdown()

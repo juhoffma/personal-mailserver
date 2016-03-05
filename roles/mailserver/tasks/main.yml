@@ -3,3 +3,5 @@
 - include: amavis.yml
 - include: dovecot.yml
 - include: dkim.yml
+- include: mailsigger.yml
+- include: fetchmail.yml
