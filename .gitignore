@@ -3,3 +3,5 @@
 .ansible
 ansible.cfg
 inventory
+
+playbook.retry
