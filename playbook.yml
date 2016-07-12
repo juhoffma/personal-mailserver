@@ -1,14 +1,18 @@
 ---
 - hosts: all
-  sudo: true
+  gather_facts: True
+  become: true
   vars:
     document_root: /vagrant
     domain_name: example.com
+    hostname: mail
     enable_sa: 1
     enable_sa_update: 1
     local_network: 192.168.178.0/24
     debug: true
   pre_tasks:
+    - name: Set the hostname to {{ hostname }}
+      hostname: name={{ hostname }}
     - name: update apt cache
       apt: update_cache=yes
     - name: upgrade system
